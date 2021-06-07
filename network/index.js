@@ -43,6 +43,36 @@ async function getLatestPrice_PTA_USDT() {
     }
 }
 
+async function executePending(signedMessage, market){
+    let url = constant.BaseUrl_P2 + "order.pending"; 
+    let body = `api_key=${secret.API_Key}&limit=10&market=${market}&offset=0&sign=${signedMessage}`;
+    try {
+        //let resp = await fetch(url, {method: 'POST', body: body});
+        let resp = await execFile('curl', ['--data', body, url]);
+        //let data = await resp.json();
+        let data = JSON.parse(resp.stdout);
+        console.log(data);
+        return data;
+    } catch(err) {
+        console.error("Error message" + err);
+    }
+}
+
+async function executeCanceling(signedMessage, market, id) {
+    let url = constant.BaseUrl_P2 + "order.cancel"; 
+    let body = `api_key=${secret.API_Key}&market=${market}&order_id=${id}&sign=${signedMessage}`;
+    try {
+        //let resp = await fetch(url, {method: 'POST', body: body});
+        let resp = await execFile('curl', ['--data', body, url]);
+        //let data = await resp.json();
+        let data = JSON.parse(resp.stdout);
+        console.log(data);
+        return data;
+    } catch(err) {
+        console.error("Error message" + err);
+    }
+}
+
 async function executeOrder(signedMessage, volume, price, market, side){
     let url = constant.BaseUrl_P2 + "order.put_limit"; 
     let body = `amount=${volume}&api_key=${secret.API_Key}&isfee=0&market=${market}&price=${price}&sign=${signedMessage}&side=${side}`;
@@ -78,7 +108,8 @@ async function executeBookOrder(market, side, total){
 module.exports = {
     executeOrder: executeOrder,
     executeBookOrder: executeBookOrder,
+    executePending: executePending,
+    executeCanceling: executeCanceling,
     getLatestPrice_PTA_USDT: getLatestPrice_PTA_USDT,
     getLatestPrice_PTA_BTC: getLatestPrice_PTA_BTC
-
 }

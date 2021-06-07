@@ -16,6 +16,43 @@ function signMessage(volume, price, market, side){
     return md5(message).toUpperCase();
 }
 
+function signMessageForPending(market){
+    let message = `api_key=${secret.API_Key}&limit=10&market=${market}&offset=0&secret_key=${secret.Secret}`;
+    return md5(message).toUpperCase();
+}
+
+async function getPending(market) {
+    try {
+        let signedMessage = signMessageForPending(market);
+        console.log(signMessage);
+        let pending = await network.executePending(signedMessage, market);
+        return pending;
+    } catch(err) {
+        console.error("Error message(Pending) " + err);
+
+    }
+}
+
+
+function signMessageForCanceing(market, id){
+    let message = `api_key=${secret.API_Key}&market=${market}&order_id=${id}&secret_key=${secret.Secret}`;
+    return md5(message).toUpperCase();
+}
+
+async function cancelOrder(market, id) {
+    try {
+        let signedMessage = signMessageForCanceing(market, id);
+        console.log(signMessage);
+        let pending = await network.executeCanceling(signedMessage, market, id);
+        //console.log(pending.result.PTAUSDT.records);
+        return pending;
+    } catch(err) {
+        console.error("Error message(Pending) " + err);
+
+    }
+}
+
+
 async function placeOrder(volumePTAUSDT, volumePTABTC, paused) {
     try {
         //USDT pair
@@ -79,7 +116,25 @@ async function orderLoop(pause, dailyVolume){
                 console.error(err);
             }
         }
-        await sleep(pause/2);
+        await sleep(pause*2);
+
+        let pending = await getPending("PTA/USDT");
+        //console.log(pending )
+        
+        //.result.PTAUSDT.records;
+        if(pending.result.PTAUSDT.records) {
+            let rslt = await cancelOrder("PTA/USDT", pending.result.PTAUSDT.records[0].id);
+           /// console.log(rslt);
+        }
+    
+        pending = await getPending("PTA/BTC")  //.result.PTABTC.records;
+        //console.log(pending );
+        if(pending.result.PTABTC.records) {
+            let rslt = await cancelOrder("PTA/BTC", pending.result.PTABTC.records[0].id);
+            //console.log(rslt);
+        }
+    
+
     }
 }
 
@@ -87,3 +142,25 @@ module.exports = {
     orderLoop: orderLoop
 }
 //orderLoop(10000, 7000);
+
+//console.log(getPending("PTA/BTC"));
+
+async function foo() {
+    let pending = await getPending("PTA/USDT");
+    console.log(pending )
+    
+    //.result.PTAUSDT.records;
+    if(pending.result.PTAUSDT.records) {
+        let rslt = await cancelOrder("PTA/USDT", pending.result.PTAUSDT.records[0].id);
+        console.log(rslt);
+    }
+
+    pending = await getPending("PTA/BTC")  //.result.PTABTC.records;
+    console.log(pending );
+    if(pending.result.PTABTC.records) {
+        let rslt = await cancelOrder("PTA/BTC", pending.result.PTABTC.records[0].id);
+        console.log(rslt);
+    }
+
+}
+console.log(foo());
